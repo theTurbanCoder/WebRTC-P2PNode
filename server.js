@@ -13,54 +13,96 @@ class Clients {
 const ws = require('ws');
 
 const wss = new ws.Server({
-    port: 8080,
-    perMessageDeflate: {
-      zlibDeflateOptions: {
-        // See zlib defaults.
-        chunkSize: 1024,
-        memLevel: 7,
-        level: 3
-      },
-      zlibInflateOptions: {
-        chunkSize: 10 * 1024
-      },
-      // Other options settable:
-      clientNoContextTakeover: true, // Defaults to negotiated value.
-      serverNoContextTakeover: true, // Defaults to negotiated value.
-      serverMaxWindowBits: 10, // Defaults to negotiated value.
-      // Below options specified as default values.
-      concurrencyLimit: 10, // Limits zlib concurrency for perf.
-      threshold: 1024 // Size (in bytes) below which messages
-      // should not be compressed.
-    }
+    port: 8080
   });
 
 
 const clients =  new Clients();
+let localOffer=  null;
 
+let remoteAnswer = null;
+
+let remotePeer =  null;
+let localPeer = null;
+
+
+let count = 0;
 console.log(ws);
 
 wss.on('connection', (client) => {
 
     client.on('message',(data) => {
 
-        const f =  JSON.parse(data);
-        // console.dir(f);
+      let msg = JSON.parse(data);
 
-        clients.saveClient(f.username,client)
+      
+      switch (msg.type) {
+        case "addUser":
 
+        if(!clients.clientList[msg.username])
+        {
+          console.log('added user');
+          clients.saveClient(msg.username,client);
+
+          if (clients.clientList['localPeer'] && clients.clientList['remotePeer']) {
+            clients.clientList['localPeer'].send(JSON.stringify({type:'sendLocalOffer',username:'localPeer'}))
+          }
         
-        clients.saveClient(f.username,client);
+        }
+      
+          
+          break;
+      
 
-        clients.clientList['remotePeer'] ? clients.clientList['remotePeer'].send('remotePeer')  : null;
-        clients.clientList['localPeer'].send('LocalPeeer');
-        
+          case 'offer':
 
-        console.log(typeof f.localOffer);
+          if(!localOffer)
+          {
+            console.log('local offer');
+            localOffer = msg.localOffer;
+            
+            clients.clientList['remotePeer'] ? clients.clientList['remotePeer'].send(JSON.stringify({type:'offer',localOffer:localOffer})) : null
+          }
 
-    })
+          break;
+
+
+          case 'remoteAnswer':
+          
+              remoteAnswer =  msg.remoteAnswer;
+              clients.clientList['localPeer'] ? clients.clientList['localPeer'].send(JSON.stringify({type:'answer',remoteAnswer:remoteAnswer})) : null
+              clients.clientList['localPeer'] ? clients.clientList['localPeer'].send(JSON.stringify({type:'sendLocalCandidate'})) : null
+          break;
+
+
+          case 'localCandidate':
+
+
+            console.log('localCandiate',msg.localCandidate);
+            clients.clientList['remotePeer'] ? clients.clientList['remotePeer'].send(JSON.stringify({type:'localCandidate',localCandidate:msg.localCandidate})) : null
+            
+            break;
+
+            case 'remoteCandidate':
+
+                console.log('localCandiate',msg.remoteCandidate);
+                clients.clientList['localPeer'] ? clients.clientList['localPeer'].send(JSON.stringify({type:'remoteCandidate',remoteCandidate:msg.remoteCandidate})) : null
+
+            break;
+
+
+        default:
+          break;
+      }
+
+    });
+
+
+   
+  
 
 });
+
 
 
 
