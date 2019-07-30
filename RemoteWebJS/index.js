@@ -81,10 +81,11 @@ function receiveChannelCallback(event){
 
     console.log('receive channel callback');
     receiveChannel = event.channel
-    console.log(receiveChannel)
+    console.log('Receive Chanenl',receiveChannel)
     receiveChannel.binaryType ='arraybuffer';
     receiveChannel.addEventListener('close',onReceiveChannelClosed)
     receiveChannel.addEventListener('message',onReceiveMessageCallback);
+    
 
 }
 
@@ -92,6 +93,7 @@ function receiveChannelCallback(event){
 
 function onReceiveMessageCallback(event){
     console.log("Message:", event.data);
+    receiveChannel.send('Tanveer Anand did the work fuck this is basic shit.')
 }
 function onReceiveChannelClosed(){}
 

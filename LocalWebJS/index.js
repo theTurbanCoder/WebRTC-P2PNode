@@ -122,6 +122,7 @@ async function createConnection(){
     sendChannel.onopen = onSendChannelOpen;
     sendChannel.onclose = onSendChannelClose;
 
+    sendChannel.addEventListener('message',sendChannelGotData);
 
     localConnection.addEventListener('icecandidate',e => {onIceCandidate(localConnection,e)});
 
@@ -151,6 +152,13 @@ async function createConnection(){
 }
 
 
+
+function sendChannelGotData(event)
+{
+
+    console.log("Send Channle got", event.data);
+
+}
 
 
 function handleRemoteAnswer(desc)
