@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "bson": "^4.0.2",
+    "fs": "0.0.1-security",
     "reconnecting-websocket": "^4.1.10",
     "webpack": "^4.38.0",
     "webpack-cli": "^3.3.6",
