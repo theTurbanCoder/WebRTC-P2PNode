@@ -5,8 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <link rel="stylesheet" href="./test.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
     <script src="./dist/main.js"></script>
+    <link rel="stylesheet" href="./test.css">
+
 </head>
 <body>
 
@@ -25,13 +30,17 @@
                                 </div>
                             </div>
                             <div class="col-1-of-2">
-                                <div id="chartContainer" style="height: 300px; width: 100%;"></div>
+                                 <canvas id="myChart" width="400" height="400"></canvas>
+                                 
                             </div>
+                        </div>
+
+                        <div class="testT">
+                            <input type="text" name="average" id="average">
                         </div>
             </section>
         </div>
     </main>
-
 
 </body>
 </html>

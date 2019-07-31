@@ -1,12 +1,87 @@
 'use strict';
 import ReconnectingWebSocket from 'reconnecting-websocket';
-const webSocket = new ReconnectingWebSocket('ws://localhost:8080');
+const webSocket = new ReconnectingWebSocket('ws://3.82.120.170:8080');
+const BSON = require('bson');
 let remoteConnection;
 let localOffer;
 let remoteAnswer;
 let localConnection; 
 let localCandidate = null;
 let receiveChannel;
+
+
+
+$(document).ready(function(){
+
+    var averageElement = document.getElementById('average');
+    averageElement.value = 'Average Time : ' + 0;
+
+    let receivedTime = null;;
+    let sentTime =  null;
+
+    var mainD = [];
+    var mainD21 = [];
+    var mainD23 = [];
+    var mainD34 = [];
+
+    var count = 0;
+    
+   
+
+    var chart = null;
+    var chart1 = null;
+    var chart2 = null;
+    var chart3 = null;
+
+    var ctx = document.getElementById('myChart').getContext('2d');
+
+  let dataCh =  {
+        labels: [new Date().getMinutes()],
+        datasets: [{
+            label: 'Delta T4 - T1',
+            backgroundColor: 'rgb(255, 99, 132)',
+            borderColor: 'rgb(255, 99, 132)',
+            data: mainD,
+            fill:false,
+            lineTension: 0
+        }]
+    }
+    let options = {
+        // The type of chart we want to create
+        type: 'line',
+    
+        // The data for our dataset
+        data:dataCh,
+    
+        // Configuration options go here
+        options: {}
+    }
+
+
+    var timeS = new Date();
+
+
+
+
+    function utcTime(now)
+    {
+        
+        var utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+        return utc
+    }
+    
+
+
+
+    function updateMyChart(chart,data,dataSet){
+
+        chart.data.labels.push(new Date().getMinutes());
+    
+        chart.data.datasets[dataSet].data.push(data);
+    
+        chart.update();
+      }
+
 
 async function createConnection(){
     const servers= null;
@@ -45,11 +120,44 @@ function receiveChannelCallback(event){
 
 async function onReceiveMessageCallback(event){
     console.log("Message:", event);
-    var blob = event.data
+
+    let receivedTime =  utcTime(new Date(Date.now()));
+
+if (event.data instanceof Blob) {
+    let data =  event.data;
+    var blob = data;
     var urlCreator = window.URL || window.webkitURL;
     var imageUrl = urlCreator.createObjectURL( blob );
-    console.log('url of image  is ',imageUrl);
     document.getElementById('bitmapdata').src = imageUrl;
+    console.log('url of image  is ',imageUrl);
+}
+else{
+    let sentTime = utcTime(new Date(+event.data));
+    console.log(sentTime);
+
+
+    if (sentTime && receivedTime){
+
+        console.log('fuckkkkkkkkk');
+        if(count === 0)
+        {
+            count+=1
+            mainD.push(receivedTime-sentTime)
+            chart = new Chart(ctx,options)
+            averageElement.value = 'Average Time : ' + diff;
+        
+        }
+        
+        else{
+
+            updateMyChart(chart, (receivedTime-sentTime),0)
+            averageElement.value = 'Average Time : ' + ( mainD.reduce((a,b) => a+b,0) / mainD.length);
+        }
+
+    }
+
+}
+
     receiveChannel.send('Tanveer Anand did the work fuck this is basic shit.')
 }
 function onReceiveChannelClosed(){}
@@ -98,3 +206,5 @@ webSocket.onmessage = (msg) => {
     }
 }
 createConnection();
+
+});
