@@ -124,7 +124,7 @@ function receiveChannelCallback(event){
 async function onReceiveMessageCallback(event){
  
 
-    let receivedTime =  utcTime(new Date(Date.now()));
+    let receivedTime =  new Date(Date.now());
 
 if (event.data instanceof Blob) {
     let data =  event.data;
@@ -151,12 +151,10 @@ if (event.data instanceof Blob) {
 else{
 
 
-    let sentTime = utcTime(new Date(+event.data));
+    let sentTime = new Date(+event.data);
 
 
-
-    if (sentTime && receivedTime){
-
+    console.log(receivedTime-sentTime)
 
         if(count === 0)
         {
@@ -175,7 +173,7 @@ else{
 
     }
 
-}
+
 
     receiveChannel.send('Tanveer Anand did the work fuck this is basic shit.')
 }

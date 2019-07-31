@@ -88,7 +88,7 @@ async function createConnection(){
 
 function sendChannelGotData(event)
 {
-    console.log("Send Channle got", event.data);
+    // console.log("Send Channle got", event.data);
 }
 
 function handleRemoteAnswer(desc)
