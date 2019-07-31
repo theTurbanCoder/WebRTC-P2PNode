@@ -1,7 +1,8 @@
 'use strict';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 const webSocket = new ReconnectingWebSocket('ws://3.82.120.170:8080');
-const BSON = require('bson');
+
+
 let remoteConnection;
 let localOffer;
 let remoteAnswer;
@@ -9,7 +10,9 @@ let localConnection;
 let localCandidate = null;
 let receiveChannel;
 
+let imageUrl;
 
+let previousURL;
 
 $(document).ready(function(){
 
@@ -88,15 +91,15 @@ async function createConnection(){
     remoteConnection = new RTCPeerConnection(servers);
     remoteConnection.addEventListener('icecandidate', e => { onIceCandidate(remoteConnection,e)} )
     remoteConnection.addEventListener('datachannel',receiveChannelCallback)
-    console.log(remoteConnection);
+
 }
 
 async function handleDescription(desc) {
-    console.log(desc.sdp);
+
     remoteConnection.setRemoteDescription(desc)
     try {
         remoteAnswer = await remoteConnection.createAnswer();
-        console.log('remote Answer',remoteAnswer);
+
         handleRemoteAnswer(remoteAnswer);
     }
     catch(error)
@@ -110,16 +113,16 @@ async function handleRemoteAnswer(desc) {
 
 
 function receiveChannelCallback(event){
-    console.log('receive channel callback');
+    
     receiveChannel = event.channel
-    console.log('Receive Chanenl',receiveChannel)
+
     receiveChannel.binaryType ='blob';
     receiveChannel.addEventListener('close',onReceiveChannelClosed)
     receiveChannel.addEventListener('message',onReceiveMessageCallback);
 }
 
 async function onReceiveMessageCallback(event){
-    console.log("Message:", event);
+ 
 
     let receivedTime =  utcTime(new Date(Date.now()));
 
@@ -127,24 +130,40 @@ if (event.data instanceof Blob) {
     let data =  event.data;
     var blob = data;
     var urlCreator = window.URL || window.webkitURL;
-    var imageUrl = urlCreator.createObjectURL( blob );
+    imageUrl = urlCreator.createObjectURL( blob );
     document.getElementById('bitmapdata').src = imageUrl;
-    console.log('url of image  is ',imageUrl);
+
+ 
+    if (!previousURL || previousURL === null) {
+        previousURL = imageUrl;
+    } else {
+        
+        if(previousURL!=imageUrl){
+            let tempUrl = previousURL;
+            window.URL.revokeObjectURL(tempUrl);
+            previousURL = imageUrl;
+        }
+
+    }
+
+
 }
 else{
+
+
     let sentTime = utcTime(new Date(+event.data));
-    console.log(sentTime);
+
 
 
     if (sentTime && receivedTime){
 
-        console.log('fuckkkkkkkkk');
+
         if(count === 0)
         {
             count+=1
             mainD.push(receivedTime-sentTime)
             chart = new Chart(ctx,options)
-            averageElement.value = 'Average Time : ' + diff;
+            averageElement.value = 'Average Time : ' + receivedTime-sentTime;
         
         }
         
@@ -176,14 +195,14 @@ async function onIceCandidate(pc,e){
 async function addLocalCandidate(localCandidate)
 {
   try {
-        console.log(localCandidate)
+       
         await remoteConnection.addIceCandidate(localCandidate);
         console.log('AddIceCandidate successful: ', localCandidate);
     } catch (e) {
       console.error('Failed to add Ice Candidate: ', e);
     }
 }
-console.log(webSocket);
+
 webSocket.onopen = () => {
     webSocket.send(JSON.stringify({username:'remotePeer',type:'addUser'}));
 }
@@ -191,12 +210,12 @@ webSocket.onmessage = (msg) => {
      msg = JSON.parse(msg.data)
     switch (msg.type) {
         case 'offer':
-        console.log('remote peer',msg.localOffer)
+ 
         handleDescription(msg.localOffer);
         break;
 
         case 'localCandidate':
-        console.log('localCandidate',msg.localCandidate);
+
         if (!localCandidate) {
             localCandidate = msg.localCandidate;
             addLocalCandidate(localCandidate)
