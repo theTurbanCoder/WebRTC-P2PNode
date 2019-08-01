@@ -1,6 +1,6 @@
 'use strict';
 import ReconnectingWebSocket from 'reconnecting-websocket';
-const BSON = require('bson');
+const moment = require('moment');
 const webSocket = new ReconnectingWebSocket('ws://3.82.120.170:8080');
 
 let filearray = ['test3.jpg','test4.jpg','test5.jpg'];
@@ -69,7 +69,7 @@ async function handleRemoteCandidate(remoteCandidate)
 async function createConnection(){
 
     const servers = null;
-    const dataChannelParams = {ordered:false,binaryType:'blob'};
+    const dataChannelParams = {ordered:false};
     localConnection = new RTCPeerConnection(servers);
 
     sendChannel = localConnection.createDataChannel('sendDataChannel',dataChannelParams);
@@ -140,9 +140,12 @@ async function onSendChannelOpen(){
         for (let img in randomArr)
         {
             let blob = await fetchData('http://127.0.0.1:5501/stub-data/',`${randomArr[img]}`);
+           
+            await sendChannel.send(blob);
 
-            sendChannel.send(blob);
-            sendChannel.send(new Date().getTime());
+            webSocket.send(JSON.stringify({type:'date', sentDate: new Date()}));
+            
+
         }        
         i+=1;
     }

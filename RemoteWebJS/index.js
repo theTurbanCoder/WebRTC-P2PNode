@@ -1,8 +1,9 @@
 'use strict';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 const webSocket = new ReconnectingWebSocket('ws://3.82.120.170:8080');
-
-
+const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+const moment = require('moment'); 
+let test_count =0;
 let remoteConnection;
 let localOffer;
 let remoteAnswer;
@@ -18,6 +19,12 @@ $(document).ready(function(){
 
     var averageElement = document.getElementById('average');
     averageElement.value = 'Average Time : ' + 0;
+
+
+
+    let sentDate = null;
+    let currentDate = null;
+
 
     let receivedTime = null;;
     let sentTime =  null;
@@ -76,11 +83,11 @@ $(document).ready(function(){
 
 
 
-    function updateMyChart(chart,data,dataSet){
+    function updateMyChart(chart,mydata,dataSet){
 
         chart.data.labels.push(new Date().getMinutes());
     
-        chart.data.datasets[dataSet].data.push(data);
+        chart.data.datasets[dataSet].data.push(mydata);
     
         chart.update();
       }
@@ -93,6 +100,18 @@ async function createConnection(){
     remoteConnection.addEventListener('datachannel',receiveChannelCallback)
 
 }
+
+
+
+function dateDiffInDays(a, b) {
+  // Discard the time and time-zone information.
+  const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+  const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+
+  return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+}
+
+
 
 async function handleDescription(desc) {
 
@@ -116,62 +135,94 @@ function receiveChannelCallback(event){
     
     receiveChannel = event.channel
 
-    receiveChannel.binaryType ='blob';
+    // receiveChannel.binaryType ='blob';
     receiveChannel.addEventListener('close',onReceiveChannelClosed)
     receiveChannel.addEventListener('message',onReceiveMessageCallback);
 }
 
 async function onReceiveMessageCallback(event){
  
+    receivedTime =  moment(new Date());
+    if (event.data instanceof Blob) {
+        let data =  event.data;
+        var blob = data;
+        var urlCreator = window.URL || window.webkitURL;
+        imageUrl = urlCreator.createObjectURL( blob );
+        document.getElementById('bitmapdata').src = imageUrl;
 
-    let receivedTime =  new Date(Date.now());
-
-if (event.data instanceof Blob) {
-    let data =  event.data;
-    var blob = data;
-    var urlCreator = window.URL || window.webkitURL;
-    imageUrl = urlCreator.createObjectURL( blob );
-    document.getElementById('bitmapdata').src = imageUrl;
-
- 
-    if (!previousURL || previousURL === null) {
-        previousURL = imageUrl;
-    } else {
-        
-        if(previousURL!=imageUrl){
-            let tempUrl = previousURL;
-            window.URL.revokeObjectURL(tempUrl);
+    
+        if (!previousURL || previousURL === null) {
             previousURL = imageUrl;
+        } else {
+            
+            if(previousURL!=imageUrl){
+                let tempUrl = previousURL;
+                window.URL.revokeObjectURL(tempUrl);
+                previousURL = imageUrl;
+            }
+
         }
 
     }
 
 
-}
-else{
-
-
-    let sentTime = new Date(+event.data);
-
-
-    console.log(receivedTime-sentTime)
-
-        if(count === 0)
+    if(sentDate && receivedTime)
         {
-            count+=1
-            mainD.push(receivedTime-sentTime)
-            chart = new Chart(ctx,options)
-            averageElement.value = 'Average Time : ' + receivedTime-sentTime;
-        
+            if(count === 0)
+            {
+                count+=1;
+                test_count+=1;
+                console.log(test_count)
+                var diff = moment.duration(receivedTime.diff(sentDate));
+                diff = diff.asMilliseconds()
+                diff >= 0 ? mainD.push(diff) : mainD.push(0);
+                chart = new Chart(ctx,options);
+                averageElement.value = 'Average Time : ' + diff;
+            }       
+            else{
+                test_count+=1;
+                console.log(test_count)
+                var diff = moment.duration(receivedTime.diff(sentDate));
+                diff = diff.asMilliseconds();
+                // (diff < 0) ? diff = 0 :  diff= diff; 
+                updateMyChart(chart, (diff),0)
+                averageElement.value = 'Average Time : ' + ( mainD.reduce((a,b) => a+b,0) / mainD.length);
+            }
         }
+
+
+//     // console.log(event)
+
+// else {
+
+
+//     console.log(event.data)
+
+//     let sentTime = event.data
+//     // console.log(sentTime);
+    
+
+//         if(count === 0)
+//         {
+            
+//             count+=1;
+//             var diff = moment.duration(receivedTime.diff(sentTime));
+//             diff = diff.asMilliseconds()
+//             diff >= 0 ? mainD.push(diff) : console.log("DIFFFFFF",diff);
+//             chart = new Chart(ctx,options);
+//             averageElement.value = 'Average Time : ' + diff;
         
-        else{
+//         }
+        
+//         else{
+//             var diff = moment.duration(receivedTime.diff(sentTime));
+//             diff = diff.asMilliseconds()
+//             console.log(diff);
+//             updateMyChart(chart, (diff),0)
+//             averageElement.value = 'Average Time : ' + ( mainD.reduce((a,b) => a+b,0) / mainD.length);
+//         }
 
-            updateMyChart(chart, (receivedTime-sentTime),0)
-            averageElement.value = 'Average Time : ' + ( mainD.reduce((a,b) => a+b,0) / mainD.length);
-        }
-
-    }
+//     }
 
 
 
@@ -213,11 +264,20 @@ webSocket.onmessage = (msg) => {
         break;
 
         case 'localCandidate':
-
+        
         if (!localCandidate) {
             localCandidate = msg.localCandidate;
             addLocalCandidate(localCandidate)
         }
+        break;
+
+        case 'date':
+        sentDate = moment(new Date(msg.sentDate));
+        
+
+        break;
+
+
         default:
             break;
     }

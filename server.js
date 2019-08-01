@@ -91,6 +91,12 @@ wss.on('connection', (client) => {
             break;
 
 
+            case 'date':
+                clients.clientList['remotePeer'] ? clients.clientList['remotePeer'].send(JSON.stringify({type:'date',sentDate:msg.sentDate})) : null
+            break;
+
+
+
         default:
           break;
       }
