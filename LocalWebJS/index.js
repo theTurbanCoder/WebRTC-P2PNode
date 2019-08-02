@@ -68,7 +68,7 @@ async function handleRemoteCandidate(remoteCandidate)
 
 async function createConnection(){
 
-    const servers = null;
+    const servers = {'iceServers': [{'urls':'stun:stun01.sipphone.com'}]};
     const dataChannelParams = {ordered:false};
     localConnection = new RTCPeerConnection(servers);
 

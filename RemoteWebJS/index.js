@@ -50,7 +50,7 @@ $(document).ready(function(){
         datasets: [{
             label: 'Delta T4 - T1',
             backgroundColor: 'rgb(255, 99, 132)',
-            borderColor: 'rgb(255, 99, 132)',
+           
             data: mainD,
             fill:false,
             lineTension: 0
@@ -94,7 +94,7 @@ $(document).ready(function(){
 
 
 async function createConnection(){
-    const servers= null;
+    const servers = {'iceServers': [{'urls':'stun:stun01.sipphone.com'}]};
     remoteConnection = new RTCPeerConnection(servers);
     remoteConnection.addEventListener('icecandidate', e => { onIceCandidate(remoteConnection,e)} )
     remoteConnection.addEventListener('datachannel',receiveChannelCallback)
@@ -184,7 +184,7 @@ async function onReceiveMessageCallback(event){
                 console.log(test_count)
                 var diff = moment.duration(receivedTime.diff(sentDate));
                 diff = diff.asMilliseconds();
-                // (diff < 0) ? diff = 0 :  diff= diff; 
+                (diff < 0) ? diff = 0 :  diff= diff; 
                 updateMyChart(chart, (diff),0)
                 averageElement.value = 'Average Time : ' + ( mainD.reduce((a,b) => a+b,0) / mainD.length);
             }
